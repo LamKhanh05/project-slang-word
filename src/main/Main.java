@@ -8,56 +8,50 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+/**
+ * Lớp Main (Entry Point).
+ * Khởi tạo ứng dụng.
+ * Xử lý logic tải/lưu file index.
+ */
 public class Main {
-    private static final String INDEX_FILE = "data/slang.dat";
-    private static final String TEXT_FILE = "data/slang.txt";
+    private static final String INDEX_FILE = "data/slang.dat"; // File lưu index
+    private static final String TEXT_FILE = "data/slang.txt"; // File data gốc
 
     public static void main(String[] args) {
-        SlangDAO dao = null;
+        SlangDAO dao;
         File indexFile = new File(INDEX_FILE);
 
-        // Cố gắng tải file index trước
-        if (indexFile.exists() && !indexFile.isDirectory()) {
-            try {
+        try {
+            if (indexFile.exists() && !indexFile.isDirectory()) {
+                // Tải file index đã tối ưu, khởi động siêu nhanh
                 dao = SlangDAO.loadIndexedData(INDEX_FILE);
-            } catch (IOException | ClassNotFoundException e) {
-                System.err.println("Warning: Indexed file '" + INDEX_FILE + "' is corrupt or incompatible.");
-                System.err.println("Deleting corrupt file and rebuilding from " + TEXT_FILE + "...");
-                indexFile.delete(); // Xóa file hỏng
-                dao = null; // Đặt lại dao để chắc chắn tải lại
-            }
-        }
-
-        // Nếu dao chưa được tải (lần chạy đầu hoặc file index bị hỏng)
-        if (dao == null) {
-            try {
-                System.out.println("Building index from " + TEXT_FILE + "...");
+            } else {
+                // Lần chạy đầu tiên, xây dựng index từ file text
+                System.out.println("Index file not found. Building index from " + TEXT_FILE + "...");
                 dao = new SlangDAO();
                 dao.loadDataFromTextFile(TEXT_FILE);
-                dao.saveIndexedData(INDEX_FILE); // Lưu lại file index mới
-            } catch (FileNotFoundException e) {
-                System.err.println("ERROR: Data file not found: " + TEXT_FILE);
-                System.err.println("Please make sure " + TEXT_FILE + " is in the same directory. Exiting.");
-                return; // Không thể chạy nếu không có file .txt
-            } catch (IOException e) {
-                System.err.println("An I/O error occurred while building index: " + e.getMessage());
-                e.printStackTrace();
-                return;
+                // Lưu lại file index cho lần sau
+                dao.saveIndexedData(INDEX_FILE);
             }
-        }
 
-        // Từ đây, chương trình chạy bình thường với 'dao' đã được đảm bảo
-        SlangService service = new SlangService(dao);
-        ConsoleView view = new ConsoleView(service);
+            SlangService service = new SlangService(dao);
+            ConsoleView view = new ConsoleView(service);
 
-        view.showMenu();
+            view.showMenu(); // Bắt đầu vòng lặp chính
 
-        try {
+            // Khi vòng lặp kết thúc (người dùng thoát)
             System.out.println("Saving data before exiting...");
             dao.saveIndexedData(INDEX_FILE);
             System.out.println("Goodbye!");
+
+        } catch (FileNotFoundException e) {
+            System.err.println("ERROR: Data file not found: " + TEXT_FILE);
+            System.err.println("Please make sure " + TEXT_FILE + " is in the same directory.");
         } catch (IOException e) {
-            System.err.println("An I/O error occurred while saving index: " + e.getMessage());
+            System.err.println("An I/O error occurred: " + e.getMessage());
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            System.err.println("An error occurred loading indexed data. File might be corrupt.");
             e.printStackTrace();
         }
     }

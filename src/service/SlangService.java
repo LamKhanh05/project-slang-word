@@ -9,54 +9,55 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class SlangService {
+/**
+ * Lớp Service (Business Logic Layer).
+ * Xử lý tất cả logic nghiệp vụ, không quan tâm đến I/O file hay View.
+ */
+public class    SlangService {
     private SlangDAO slangDAO;
     private Random random = new Random();
+
+    // File text data gốc
     private final String TEXT_FILE = "slang.txt";
 
     public SlangService(SlangDAO dao) {
         this.slangDAO = dao;
     }
 
+    // Chức năng 1: Tìm theo slang word
     public List<String> findBySlang(String slang) {
         String upperSlang = slang.toUpperCase();
         slangDAO.getSearchHistory().add(slang);
         return slangDAO.getSlangDictionary().get(upperSlang);
     }
+
+    // Chức năng 2: Tìm theo definition
     public List<String> findByDefinition(String keyword) {
         String lowerKeyword = keyword.toLowerCase().replaceAll("[^a-zA-Z0-9]", "");
         slangDAO.getSearchHistory().add(keyword);
         return slangDAO.getInvertedIndex().get(lowerKeyword);
     }
+
+    // Chức năng 3: Hiển thị history
     public List<String> getSearchHistory() {
         return slangDAO.getSearchHistory();
     }
 
-
+    // Chức năng 4: Add slang word
     public boolean addSlang(String slang, String definition, boolean overwrite) throws IOException {
-        // Validate
-        if (slang == null || slang.trim().isEmpty() || definition == null || definition.trim().isEmpty()) {
-            return false; // Báo lỗi nếu input rỗng
-        }
-
-        String upperSlang = slang.trim().toUpperCase();
-        String trimmedDef = definition.trim();
+        String upperSlang = slang.toUpperCase();
 
         if (slangDAO.getSlangDictionary().containsKey(upperSlang)) {
             if (overwrite) {
                 List<String> definitions = slangDAO.getSlangDictionary().get(upperSlang);
                 definitions.clear();
-                definitions.add(trimmedDef);
+                definitions.add(definition);
             } else {
-                // Khi duplicate, cũng kiểm tra xem definition mới này đã tồn tại chưa
-                List<String> definitions = slangDAO.getSlangDictionary().get(upperSlang);
-                if (!definitions.contains(trimmedDef)) {
-                    definitions.add(trimmedDef);
-                }
+                slangDAO.getSlangDictionary().get(upperSlang).add(definition);
             }
         } else {
             List<String> definitions = new ArrayList<>();
-            definitions.add(trimmedDef);
+            definitions.add(definition);
             slangDAO.getSlangDictionary().put(upperSlang, definitions);
         }
 
@@ -65,32 +66,24 @@ public class SlangService {
         return true;
     }
 
+    // Chức năng 5: Edit slang word
     public boolean editSlang(String oldSlang, String newSlang, String newDefinition) throws IOException {
-        // Validate
-        if (newSlang == null || newSlang.trim().isEmpty() || newDefinition == null || newDefinition.trim().isEmpty()) {
-            return false; // Báo lỗi nếu input mới rỗng
-        }
-
         String upperOldSlang = oldSlang.toUpperCase();
-        String upperNewSlang = newSlang.trim().toUpperCase();
-        String trimmedNewDef = newDefinition.trim();
+        String upperNewSlang = newSlang.toUpperCase();
 
-        // Lấy định nghĩa cũ ra (và xóa entry cũ)
-        List<String> definitions = slangDAO.getSlangDictionary().remove(upperOldSlang);
-        if (definitions == null) {
-            // Trường hợp này gần như không xảy ra vì View đã kiểm tra
-            return false;
+        if (!slangDAO.getSlangDictionary().containsKey(upperOldSlang)) {
+            return false; // Slang cũ không tồn tại
         }
+
+        List<String> definitions = slangDAO.getSlangDictionary().remove(upperOldSlang);
 
         if (upperOldSlang.equals(upperNewSlang)) {
-            // Nếu không đổi tên, chỉ cập nhật definition
             definitions.clear();
-            definitions.add(trimmedNewDef);
+            definitions.add(newDefinition);
             slangDAO.getSlangDictionary().put(upperNewSlang, definitions);
         } else {
-            // Nếu đổi tên, tạo entry mới
             List<String> newDefinitions = new ArrayList<>();
-            newDefinitions.add(trimmedNewDef);
+            newDefinitions.add(newDefinition);
             slangDAO.getSlangDictionary().put(upperNewSlang, newDefinitions);
         }
 
@@ -99,22 +92,28 @@ public class SlangService {
         return true;
     }
 
+    // Chức năng 6: Delete slang word
     public boolean deleteSlang(String slang) throws IOException {
         String upperSlang = slang.toUpperCase();
-        if (slangDAO.getSlangDictionary().remove(upperSlang) == null) {
+        if (!slangDAO.getSlangDictionary().containsKey(upperSlang)) {
             return false; // Không tồn tại
         }
+
+        slangDAO.getSlangDictionary().remove(upperSlang);
+
         slangDAO.buildInvertedIndex();
         slangDAO.saveDataToTextFile(TEXT_FILE);
         return true;
     }
 
+    // Chức năng 7: Reset danh sách gốc
     public void resetDictionary() throws IOException {
-        slangDAO.resetToOriginal(); // Gọi hàm reset từ bộ nhớ
-        slangDAO.saveDataToTextFile(TEXT_FILE); // Lưu trạng thái đã reset ra file .txt
+        slangDAO.loadDataFromTextFile(TEXT_FILE);
+        slangDAO.saveDataToTextFile(TEXT_FILE);
         System.out.println("Dictionary has been reset to original state.");
     }
 
+    // Chức năng 8: Random 1 slang word
     public SlangWord getRandomSlang() {
         List<String> slangKeys = new ArrayList<>(slangDAO.getSlangDictionary().keySet());
         if (slangKeys.isEmpty()) {
@@ -126,6 +125,7 @@ public class SlangService {
         return new SlangWord(randomSlang, definitions);
     }
 
+    // Chức năng 9 & 10: Đố vui
     public QuizQuestion generateQuiz(boolean slangAsQuestion) {
         List<SlangWord> randomSlangs = new ArrayList<>();
 

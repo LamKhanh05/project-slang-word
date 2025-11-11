@@ -8,6 +8,11 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Scanner;
 
+/**
+ * Lớp View (Presentation Layer).
+ * Chỉ chịu trách nhiệm hiển thị UI, nhận input,
+ * và gọi Service để xử lý.
+ */
 public class ConsoleView {
     private SlangService slangService;
     private Scanner scanner;
@@ -36,7 +41,6 @@ public class ConsoleView {
 
             try {
                 String line = scanner.nextLine();
-                if (line.isEmpty()) continue; // Tránh lỗi NumberFormat nếu chỉ nhấn Enter
                 int choice = Integer.parseInt(line);
                 switch (choice) {
                     case 1: handleFindBySlang(); break;
@@ -120,11 +124,8 @@ public class ConsoleView {
             }
         }
 
-        if (slangService.addSlang(slang, definition, overwrite)) {
-            System.out.println("Slang added successfully.");
-        } else {
-            System.out.println("Error: Slang or definition cannot be empty.");
-        }
+        slangService.addSlang(slang, definition, overwrite);
+        System.out.println("Slang added successfully.");
     }
 
     private void handleEditSlang() throws IOException {
@@ -138,18 +139,15 @@ public class ConsoleView {
 
         System.out.print("Enter new slang name (or press Enter to keep old): ");
         String newSlang = scanner.nextLine();
-        if (newSlang.isEmpty()) { // Nếu nhấn Enter, giữ tên cũ
+        if (newSlang.isEmpty()) {
             newSlang = oldSlang;
         }
 
         System.out.print("Enter new definition: ");
         String newDefinition = scanner.nextLine();
 
-        if (slangService.editSlang(oldSlang, newSlang, newDefinition)) {
-            System.out.println("Slang edited successfully.");
-        } else {
-            System.out.println("Error: New slang name or new definition cannot be empty.");
-        }
+        slangService.editSlang(oldSlang, newSlang, newDefinition);
+        System.out.println("Slang edited successfully.");
     }
 
     private void handleDeleteSlang() throws IOException {
@@ -167,9 +165,6 @@ public class ConsoleView {
         if ("y".equalsIgnoreCase(confirm)) {
             if (slangService.deleteSlang(slang)) {
                 System.out.println("Slang deleted successfully.");
-            } else {
-                // Lỗi này không bao giờ xảy ra nếu logic trên đúng
-                System.out.println("Error: Slang not found during deletion.");
             }
         } else {
             System.out.println("Delete cancelled.");
