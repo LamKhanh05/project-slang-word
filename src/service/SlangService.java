@@ -18,7 +18,7 @@ public class    SlangService {
     private Random random = new Random();
 
     // File text data gốc
-    private final String TEXT_FILE = "slang.txt";
+    private final String TEXT_FILE = "data/slang.txt";
 
     public SlangService(SlangDAO dao) {
         this.slangDAO = dao;
