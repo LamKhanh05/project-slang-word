@@ -3,10 +3,13 @@ package dao;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
- * Lớp DAO (Data Access Object) - Trái tim của ứng dụng.
+ * Lớp DAO (Data Access Object)
  * Quản lý toàn bộ việc truy cập, lưu trữ, và tối ưu dữ liệu.
  * Implement Serializable để lưu toàn bộ các cấu trúc index đã xây dựng.
  */
@@ -20,30 +23,48 @@ public class SlangDAO implements Serializable {
     // Cấu trúc 2: Tối ưu Chức năng 2 (Tìm theo Definition) - "Inverted Index"
     private HashMap<String, List<String>> invertedIndex;
 
-    // Cấu trúc 3: Lưu bản gốc để Reset (Chức năng 7)
-    private HashMap<String, List<String>> originalDictionary;
-
-    // Cấu trúc 4: Lịch sử tìm kiếm (Chức năng 3)
+    // Cấu trúc 3: Lịch sử tìm kiếm (Chức năng 3)
     private List<String> searchHistory;
 
     public SlangDAO() {
         this.slangDictionary = new HashMap<>();
         this.invertedIndex = new HashMap<>();
-        this.originalDictionary = new HashMap<>();
         this.searchHistory = new ArrayList<>();
     }
 
+    /**
+     * Tải dữ liệu (đã index) từ file binary.
+     */
+    public static SlangDAO loadIndexedData(String indexFile) throws IOException, ClassNotFoundException {
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(indexFile))) {
+            SlangDAO dao = (SlangDAO) ois.readObject();
+            System.out.println("Indexed data loaded from " + indexFile);
+            return dao;
+        }
+    }
+
     // --- Getters cho Service ---
-    public HashMap<String, List<String>> getSlangDictionary() { return slangDictionary; }
-    public HashMap<String, List<String>> getInvertedIndex() { return invertedIndex; }
-    public List<String> getSearchHistory() { return searchHistory; }
+    public HashMap<String, List<String>> getSlangDictionary() {
+        return slangDictionary;
+    }
+
+    public HashMap<String, List<String>> getInvertedIndex() {
+        return invertedIndex;
+    }
+
+    public void clearHistory() {
+        searchHistory.clear();
+    }
+
+    public List<String> getSearchHistory() {
+        return searchHistory;
+    }
 
     /**
      * Tải dữ liệu từ file text (slang.txt)
      */
     public void loadDataFromTextFile(String textFile) throws IOException {
         slangDictionary.clear();
-        originalDictionary.clear();
 
         List<String> lines = Files.readAllLines(Paths.get(textFile));
         for (String line : lines.subList(1, lines.size())) {
@@ -62,16 +83,13 @@ public class SlangDAO implements Serializable {
             }
         }
 
-        // Sao lưu bản gốc
-        this.originalDictionary = new HashMap<>(slangDictionary);
-
         // Xây dựng Inverted Index
         buildInvertedIndex();
         System.out.println("Loaded " + slangDictionary.size() + " slang words from " + textFile);
     }
 
     /**
-     * Xây dựng (hoặc xây dựng lại) Inverted Index từ Slang Dictionary.
+     * Xây dựng Inverted Index từ Slang Dictionary.
      */
     public void buildInvertedIndex() {
         invertedIndex.clear();
@@ -99,34 +117,6 @@ public class SlangDAO implements Serializable {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(indexFile))) {
             oos.writeObject(this);
             System.out.println("Indexed data saved to " + indexFile);
-        }
-    }
-
-    /**
-     * Tải dữ liệu (đã index) từ file binary.
-     */
-    public static SlangDAO loadIndexedData(String indexFile) throws IOException, ClassNotFoundException {
-        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(indexFile))) {
-            SlangDAO dao = (SlangDAO) ois.readObject();
-            System.out.println("Indexed data loaded from " + indexFile);
-            return dao;
-        }
-    }
-
-    /**
-     * Lưu lại file text gốc (khi có add, edit, delete).
-     */
-    public void saveDataToTextFile(String textFile) throws IOException {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(textFile))) {
-            List<String> sortedSlangs = new ArrayList<>(slangDictionary.keySet());
-            Collections.sort(sortedSlangs);
-
-            for (String slang : sortedSlangs) {
-                List<String> definitions = slangDictionary.get(slang);
-                String definitionString = String.join("| ", definitions);
-                writer.write(slang + "`" + definitionString);
-                writer.newLine();
-            }
         }
     }
 }

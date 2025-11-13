@@ -23,7 +23,6 @@ public class Main {
 
         try {
             if (indexFile.exists() && !indexFile.isDirectory()) {
-                // Tải file index đã tối ưu, khởi động siêu nhanh
                 dao = SlangDAO.loadIndexedData(INDEX_FILE);
             } else {
                 // Lần chạy đầu tiên, xây dựng index từ file text

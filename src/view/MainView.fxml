@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="view.MainViewController" prefHeight="700.0"
+            prefWidth="800.0" xmlns="http://javafx.com/javafx/19">
+    <padding>
+        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
+    </padding>
+    <top>
+        <Label text="SLANG WORD DICTIONARY (DAMH#1)" BorderPane.alignment="CENTER">
+            <font>
+                <Font name="System Bold" size="24.0"/>
+            </font>
+            <padding>
+                <Insets bottom="10.0"/>
+            </padding>
+        </Label>
+    </top>
+    <center>
+        <StackPane fx:id="centerStackedPane">
+            <children>
+                <VBox fx:id="resultPane" spacing="10.0">
+                    <children>
+                        <Label text="Results / Output:">
+                            <font>
+                                <Font name="System Bold" size="16.0"/>
+                            </font>
+                        </Label>
+                        <ListView fx:id="resultListView" prefHeight="250.0" VBox.vgrow="ALWAYS"/>
+                    </children>
+                </VBox>
+
+                <VBox fx:id="quizPane" alignment="TOP_LEFT" spacing="15.0"
+                      style="-fx-background-color: #f0f8ff; -fx-padding: 10; -fx-border-color: #c0c0c0; -fx-border-width: 1;"
+                      visible="false">
+                    <children>
+                        <Label fx:id="quizTitleLabel" text="QUIZ TIME!">
+                            <font>
+                                <Font name="System Bold" size="16.0"/>
+                            </font>
+                        </Label>
+                        <Label fx:id="quizQuestionLabel" text="Câu hỏi sẽ xuất hiện ở đây..." wrapText="true"/>
+
+                        <VBox fx:id="quizOptionsBox" spacing="10.0">
+                            <padding>
+                                <Insets left="20.0"/>
+                            </padding>
+                        </VBox>
+
+                        <HBox spacing="10.0">
+                            <Button fx:id="quizSubmitButton" onAction="#handleQuizSubmit" text="Submit Answer"
+                                    style="-fx-font-weight: bold;"/>
+                            <Button fx:id="quizCancelButton" onAction="#handleQuizCancel" text="Cancel"
+                                    style="-fx-background-color: #ffcccc;"/>
+                        </HBox>
+                    </children>
+                </VBox>
+            </children>
+        </StackPane>
+    </center>
+    <left>
+        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" prefWidth="350.0">
+            <content>
+                <VBox spacing="15.0" prefWidth="330.0">
+                    <padding>
+                        <Insets right="10.0"/>
+                    </padding>
+
+                    <Label text="1. Find by Slang">
+                        <font>
+                            <Font name="System Bold" size="14.0"/>
+                        </font>
+                    </Label>
+                    <HBox spacing="10.0">
+                        <TextField fx:id="slangSearchField" promptText="Enter slang word..." HBox.hgrow="ALWAYS"/>
+                        <Button fx:id="slangSearchButton" onAction="#handleFindBySlang" text="Search"/>
+                    </HBox>
+
+                    <Label text="2. Find by Definition">
+                        <font>
+                            <Font name="System Bold" size="14.0"/>
+                        </font>
+                    </Label>
+                    <HBox spacing="10.0">
+                        <TextField fx:id="defSearchField" promptText="Enter definition keyword..." HBox.hgrow="ALWAYS"/>
+                        <Button fx:id="defSearchButton" onAction="#handleFindByDefinition" text="Search"/>
+                    </HBox>
+
+                    <Label text="3. Show Search History">
+                        <font>
+                            <Font name="System Bold" size="14.0"/>
+                        </font>
+                    </Label>
+                    <Button fx:id="historyButton" onAction="#handleShowHistory" text="Show History"
+                            maxWidth="Infinity"/>
+
+                    <Label text="4. Add New Slang">
+                        <font>
+                            <Font name="System Bold" size="14.0"/>
+                        </font>
+                    </Label>
+                    <TextField fx:id="addSlangField" promptText="New Slang Word"/>
+                    <TextField fx:id="addDefinitionField" promptText="Definition"/>
+                    <Button fx:id="addButton" onAction="#handleAddSlang" text="Add Slang" maxWidth="Infinity"/>
+
+                    <Label text="5. Edit Slang">
+                        <font>
+                            <Font name="System Bold" size="14.0"/>
+                        </font>
+                    </Label>
+                    <TextField fx:id="editOldSlangField" promptText="Old Slang to Edit"/>
+                    <TextField fx:id="editNewSlangField" promptText="New Slang Name (or blank to keep)"/>
+                    <TextField fx:id="editNewDefinitionField" promptText="New Definition"/>
+                    <Button fx:id="editButton" onAction="#handleEditSlang" text="Edit Slang" maxWidth="Infinity"/>
+
+                    <Label text="6. Delete Slang">
+                        <font>
+                            <Font name="System Bold" size="14.0"/>
+                        </font>
+                    </Label>
+                    <TextField fx:id="deleteSlangField" promptText="Slang to Delete"/>
+                    <Button fx:id="deleteButton" onAction="#handleDeleteSlang" text="Delete Slang" maxWidth="Infinity"
+                            style="-fx-background-color: #ffcccc;"/>
+
+                    <Label text="7. Reset Dictionary">
+                        <font>
+                            <Font name="System Bold" size="14.0"/>
+                        </font>
+                    </Label>
+                    <Button fx:id="resetButton" onAction="#handleResetDictionary" text="Reset to Original"
+                            maxWidth="Infinity" style="-fx-background-color: #ffe5cc;"/>
+
+                    <Label text="8. Random 'On This Day' Slang">
+                        <font>
+                            <Font name="System Bold" size="14.0"/>
+                        </font>
+                    </Label>
+                    <Button fx:id="randomButton" onAction="#handleRandomSlang" text="Get Random Slang"
+                            maxWidth="Infinity"/>
+
+                    <Label text="9 &amp; 10. Quiz Time!">
+                        <font>
+                            <Font name="System Bold" size="14.0"/>
+                        </font>
+                    </Label>
+                    <HBox spacing="10.0">
+                        <Button fx:id="quizSlangButton" onAction="#handleQuizGuessDefinition"
+                                text="Quiz: Guess Definition" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                        <Button fx:id="quizDefButton" onAction="#handleQuizGuessSlang" text="Quiz: Guess Slang"
+                                maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                    </HBox>
+
+                </VBox>
+            </content>
+        </ScrollPane>
+    </left>
+</BorderPane>

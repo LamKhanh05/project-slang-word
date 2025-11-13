@@ -5,20 +5,17 @@ import model.QuizQuestion;
 import model.SlangWord;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 /**
  * Lớp Service (Business Logic Layer).
  * Xử lý tất cả logic nghiệp vụ, không quan tâm đến I/O file hay View.
  */
-public class    SlangService {
+public class SlangService {
+    private final String TEXT_FILE = "data/slang.txt";
+    private final String INDEX_FILE = "data/slang.dat";
     private SlangDAO slangDAO;
     private Random random = new Random();
-
-    // File text data gốc
-    private final String TEXT_FILE = "data/slang.txt";
 
     public SlangService(SlangDAO dao) {
         this.slangDAO = dao;
@@ -33,9 +30,30 @@ public class    SlangService {
 
     // Chức năng 2: Tìm theo definition
     public List<String> findByDefinition(String keyword) {
-        String lowerKeyword = keyword.toLowerCase().replaceAll("[^a-zA-Z0-9]", "");
         slangDAO.getSearchHistory().add(keyword);
-        return slangDAO.getInvertedIndex().get(lowerKeyword);
+
+        // 1. Tách chuỗi tìm kiếm thành các từ riêng lẻ
+        String[] searchWords = keyword.toLowerCase().split("\\s+");
+
+        // 2. Dùng HashSet để tự động xử lý trùng lặp
+        Set<String> foundSlangs = new HashSet<>();
+
+        // 3. Lặp qua từng từ người dùng gõ vào
+        for (String word : searchWords) {
+            String cleanedWord = word.replaceAll("[^a-zA-Z0-9]", "");
+            if (cleanedWord.isEmpty()) continue;
+
+            // 5. Lấy danh sách slang cho từ này
+            List<String> slangsForWord = slangDAO.getInvertedIndex().get(cleanedWord);
+
+            // 6. Nếu tìm thấy, thêm tất cả vào Set kết quảs
+            if (slangsForWord != null) {
+                foundSlangs.addAll(slangsForWord);
+            }
+        }
+
+        // 7. Chuyển Set (không trùng lặp) thành List để trả về
+        return new ArrayList<>(foundSlangs);
     }
 
     // Chức năng 3: Hiển thị history
@@ -62,7 +80,6 @@ public class    SlangService {
         }
 
         slangDAO.buildInvertedIndex();
-        slangDAO.saveDataToTextFile(TEXT_FILE);
         return true;
     }
 
@@ -88,7 +105,6 @@ public class    SlangService {
         }
 
         slangDAO.buildInvertedIndex();
-        slangDAO.saveDataToTextFile(TEXT_FILE);
         return true;
     }
 
@@ -102,14 +118,14 @@ public class    SlangService {
         slangDAO.getSlangDictionary().remove(upperSlang);
 
         slangDAO.buildInvertedIndex();
-        slangDAO.saveDataToTextFile(TEXT_FILE);
         return true;
     }
 
     // Chức năng 7: Reset danh sách gốc
     public void resetDictionary() throws IOException {
         slangDAO.loadDataFromTextFile(TEXT_FILE);
-        slangDAO.saveDataToTextFile(TEXT_FILE);
+        slangDAO.clearHistory();
+        slangDAO.saveIndexedData(INDEX_FILE);
         System.out.println("Dictionary has been reset to original state.");
     }
 
