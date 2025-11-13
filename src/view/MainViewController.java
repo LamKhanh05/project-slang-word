@@ -2,317 +2,331 @@ package view;
 
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
+import javafx.util.Pair;
 import model.QuizQuestion;
 import model.SlangWord;
 import service.SlangService;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 public class MainViewController {
 
-    // Service để gọi logic nghiệp vụ
     private SlangService slangService;
+    private List<Node> allPanes;
+    private List<Button> allNavButtons;
 
-    // == KHAI BÁO BIẾN FXML (Tự động liên kết) ==
 
-    // Vùng trung tâm
+    // --- Navigation ---
     @FXML
-    private StackPane centerStackedPane;
+    private Button navSearchButton;
     @FXML
-    private VBox resultPane; // View kết quả
+    private Button navManageButton;
     @FXML
-    private VBox quizPane;   // View Quiz
+    private Button navPlayButton;
     @FXML
-    private ListView<String> resultListView;
+    private Button navHistoryButton;
 
-    // Vùng Quiz
+    // --- Panes (Màn hình) ---
     @FXML
-    private Label quizTitleLabel;
+    private AnchorPane searchPane;
     @FXML
-    private Label quizQuestionLabel;
+    private AnchorPane managePane;
     @FXML
-    private VBox quizOptionsBox; // Nơi chứa các RadioButton
+    private AnchorPane playPane;
     @FXML
-    private Button quizSubmitButton;
-    @FXML
-    private Button quizCancelButton;
+    private AnchorPane historyPane;
 
-    // Biến nội bộ để quản lý quiz
-    private QuizQuestion currentQuiz;
-    private ToggleGroup quizToggleGroup;
+    // --- Search Pane ---
+    @FXML
+    private TextField searchField;
+    @FXML
+    private RadioButton radioFindSlang;
+    @FXML
+    private ListView<String> searchResultList;
 
-    // Chức ... (các khai báo FXML khác) ...
+    // --- History Pane ---
     @FXML
-    private TextField slangSearchField;
-    @FXML
-    private Button slangSearchButton;
-    @FXML
-    private TextField defSearchField;
-    @FXML
-    private Button defSearchButton;
-    @FXML
-    private Button historyButton;
-    @FXML
-    private TextField addSlangField;
-    @FXML
-    private TextField addDefinitionField;
-    @FXML
-    private Button addButton;
-    @FXML
-    private TextField editOldSlangField;
-    @FXML
-    private TextField editNewSlangField;
-    @FXML
-    private TextField editNewDefinitionField;
-    @FXML
-    private Button editButton;
-    @FXML
-    private TextField deleteSlangField;
-    @FXML
-    private Button deleteButton;
-    @FXML
-    private Button resetButton;
-    @FXML
-    private Button randomButton;
-    @FXML
-    private Button quizSlangButton;
-    @FXML
-    private Button quizDefButton;
+    private ListView<String> historyResultList;
 
-    /**
-     * Hàm này được MainApp gọi để "tiêm" service vào.
-     */
+
+    @FXML
+    private void initialize() {
+        allPanes = Arrays.asList(searchPane, managePane, playPane, historyPane);
+        allNavButtons = Arrays.asList(navSearchButton, navManageButton, navPlayButton, navHistoryButton);
+
+        // Mặc định chọn màn hình Search
+        selectNavButton(navSearchButton);
+        showPane(searchPane);
+    }
+
     public void setSlangService(SlangService service) {
         this.slangService = service;
     }
 
-    // ========== CÁC HÀM XỬ LÝ (onAction) ==========
 
-    // ... (Các hàm 1-8: Find, Add, Edit, Delete, Reset, Random, History - Giữ nguyên) ...
-
-    /**
-     * Chức năng 1: Tìm theo Slang
-     */
     @FXML
-    private void handleFindBySlang() {
-        showResultView(); // Đảm bảo đang ở view kết quả
-        String slang = slangSearchField.getText();
-        if (isInvalid(slang, "Please enter a slang word.")) return;
+    private void handleShowSearchView() {
+        showPane(searchPane);
+        selectNavButton(navSearchButton);
+    }
 
-        List<String> definitions = slangService.findBySlang(slang);
-        clearResults();
+    @FXML
+    private void handleShowManageView() {
+        showPane(managePane);
+        selectNavButton(navManageButton);
+    }
 
-        if (definitions == null || definitions.isEmpty()) {
-            addResult("Slang '" + slang + "' not found.");
+    @FXML
+    private void handleShowPlayView() {
+        showPane(playPane);
+        selectNavButton(navPlayButton);
+    }
+
+    @FXML
+    private void handleShowHistoryView() {
+        showPane(historyPane);
+        selectNavButton(navHistoryButton);
+        loadHistoryList(); // Tải lịch sử khi nhấn vào
+    }
+
+    private void showPane(Node paneToShow) {
+        allPanes.forEach(p -> p.setVisible(p == paneToShow));
+    }
+
+    private void selectNavButton(Button buttonToSelect) {
+        allNavButtons.forEach(b -> b.getStyleClass().remove("nav-button-selected"));
+        buttonToSelect.getStyleClass().add("nav-button-selected");
+    }
+
+
+    // --- Search Pane (Chức năng 1 & 2) ---
+    @FXML
+    private void handleSearch() {
+        String keyword = searchField.getText();
+        if (isInvalid(keyword, "Please enter a keyword.")) return;
+
+        searchResultList.getItems().clear();
+
+        if (radioFindSlang.isSelected()) {
+            List<String> definitions = slangService.findBySlang(keyword);
+            if (definitions == null || definitions.isEmpty()) {
+                searchResultList.getItems().add("Slang '" + keyword + "' not found.");
+            } else {
+                searchResultList.getItems().add("Definitions for '" + keyword + "':");
+                searchResultList.getItems().addAll(definitions);
+            }
         } else {
-            addResult("Definitions for '" + slang + "':");
-            resultListView.getItems().addAll(definitions);
+            List<String> slangs = slangService.findByDefinition(keyword);
+            if (slangs == null || slangs.isEmpty()) {
+                searchResultList.getItems().add("No slangs found containing '" + keyword + "'.");
+            } else {
+                searchResultList.getItems().add("Slangs containing '" + keyword + "':");
+                searchResultList.getItems().addAll(slangs);
+            }
         }
     }
 
-    /**
-     * Chức năng 2: Tìm theo Definition
-     */
-    @FXML
-    private void handleFindByDefinition() {
-        showResultView();
-        String keyword = defSearchField.getText();
-        if (isInvalid(keyword, "Please enter a definition keyword.")) return;
-
-        List<String> slangs = slangService.findByDefinition(keyword);
-        clearResults();
-
-        if (slangs == null || slangs.isEmpty()) {
-            addResult("No slangs found containing '" + keyword + "'.");
-        } else {
-            addResult("Slangs containing '" + keyword + "':");
-            resultListView.getItems().addAll(slangs);
-        }
-    }
-
-    /**
-     * Chức năng 3: Hiển thị History
-     */
-    @FXML
-    private void handleShowHistory() {
-        showResultView();
+    // --- History Pane (Chức năng 3) ---
+    private void loadHistoryList() {
+        historyResultList.getItems().clear();
         List<String> history = slangService.getSearchHistory();
-        clearResults();
-
         if (history.isEmpty()) {
-            addResult("No search history.");
+            historyResultList.getItems().add("No search history.");
         } else {
-            addResult("Search History:");
-            resultListView.getItems().addAll(history);
+            historyResultList.getItems().addAll(history);
         }
     }
 
-    /**
-     * Chức năng 4: Add Slang
-     */
+    @FXML
+    private void handleClearHistory() {
+        Optional<ButtonType> result = showConfirmation("Confirm Clear", "Are you sure you want to clear all search history?", "", ButtonType.OK, ButtonType.CANCEL);
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            slangService.getSearchHistory().clear(); // Xóa history
+            loadHistoryList(); // Tải lại danh sách (đã rỗng)
+        }
+    }
+
+    // --- Manage Pane (Chức năng 4, 5, 6, 7) ---
+
     @FXML
     private void handleAddSlang() {
-        showResultView();
-        String slang = addSlangField.getText();
-        String definition = addDefinitionField.getText();
+        // 1. Tạo Dialog
+        Dialog<Pair<String, String>> dialog = new Dialog<>();
+        dialog.setTitle("Add New Slang");
+        dialog.setHeaderText("Enter the new slang word and its definition.");
 
-        if (isInvalid(slang, "Slang field cannot be empty.") || isInvalid(definition, "Definition field cannot be empty.")) {
-            return;
-        }
+        ButtonType addButtonType = new ButtonType("Add", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(addButtonType, ButtonType.CANCEL);
 
-        boolean overwrite = false;
-        if (slangService.findBySlang(slang) != null) {
-            Optional<ButtonType> result = showConfirmation("Slang Exists",
-                    "Slang '" + slang + "' already exists.",
-                    "Choose an option:",
-                    new ButtonType("Overwrite", ButtonBar.ButtonData.OK_DONE),
-                    new ButtonType("Duplicate (Add Definition)", ButtonBar.ButtonData.YES),
-                    new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE)
-            );
+        // 2. Tạo layout
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 150, 10, 10));
+        TextField slangField = new TextField();
+        slangField.setPromptText("New Slang Word");
+        TextField definitionField = new TextField();
+        definitionField.setPromptText("Definition");
+        grid.add(new Label("Slang:"), 0, 0);
+        grid.add(slangField, 1, 0);
+        grid.add(new Label("Definition:"), 0, 1);
+        grid.add(definitionField, 1, 1);
+        dialog.getDialogPane().setContent(grid);
 
-            if (result.isPresent()) {
-                if (result.get().getButtonData() == ButtonBar.ButtonData.OK_DONE) {
-                    overwrite = true;
-                } else if (result.get().getButtonData() == ButtonBar.ButtonData.CANCEL_CLOSE) {
-                    clearResults();
-                    addResult("Add cancelled.");
-                    return;
+        // 3. Lấy kết quả
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == addButtonType) {
+                return new Pair<>(slangField.getText(), definitionField.getText());
+            }
+            return null;
+        });
+        Optional<Pair<String, String>> result = dialog.showAndWait();
+
+        // 4. Xử lý
+        if (result.isPresent()) {
+            String slang = result.get().getKey();
+            String definition = result.get().getValue();
+            if (isInvalid(slang, "Slang field cannot be empty.") || isInvalid(definition, "Definition field cannot be empty."))
+                return;
+
+            // Xử lý trùng lặp (như code cũ)
+            boolean overwrite = false;
+            if (slangService.findBySlang(slang) != null) {
+                Optional<ButtonType> confirmResult = showConfirmation("Slang Exists", "Slang '" + slang + "' already exists.", "Overwrite or Duplicate (add definition)?", new ButtonType("Overwrite"), new ButtonType("Duplicate"), ButtonType.CANCEL);
+                if (confirmResult.isPresent()) {
+                    if (confirmResult.get().getText().equals("Overwrite")) overwrite = true;
+                    else if (confirmResult.get() == ButtonType.CANCEL) return;
                 }
             }
-        }
-
-        try {
-            slangService.addSlang(slang, definition, overwrite);
-            clearResults();
-            addResult("Slang '" + slang + "' added successfully.");
-            addSlangField.clear();
-            addDefinitionField.clear();
-        } catch (IOException e) {
-            showError("Error Adding Slang", "Could not save data: " + e.getMessage());
+            try {
+                slangService.addSlang(slang, definition, overwrite);
+                showInfo("Success", "Slang added successfully.", "");
+            } catch (IOException e) {
+                showError("Error", "Could not save data: " + e.getMessage());
+            }
         }
     }
 
-    /**
-     * Chức năng 5: Edit Slang
-     */
     @FXML
     private void handleEditSlang() {
-        showResultView();
-        String oldSlang = editOldSlangField.getText();
-        String newSlang = editNewSlangField.getText();
-        String newDefinition = editNewDefinitionField.getText();
+        // 1. Tạo Dialog
+        Dialog<String[]> dialog = new Dialog<>();
+        dialog.setTitle("Edit Slang");
+        dialog.setHeaderText("Enter the slang to edit and its new details.");
+        ButtonType editButtonType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(editButtonType, ButtonType.CANCEL);
 
-        if (isInvalid(oldSlang, "Old Slang field cannot be empty.") || isInvalid(newDefinition, "New Definition field cannot be empty.")) {
-            return;
-        }
+        // 2. Tạo layout
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 150, 10, 10));
+        TextField oldSlangField = new TextField();
+        oldSlangField.setPromptText("Old Slang to Edit");
+        TextField newSlangField = new TextField();
+        newSlangField.setPromptText("New Slang Name (blank to keep old)");
+        TextField newDefField = new TextField();
+        newDefField.setPromptText("New Definition");
+        grid.add(new Label("Old Slang:"), 0, 0);
+        grid.add(oldSlangField, 1, 0);
+        grid.add(new Label("New Slang:"), 0, 1);
+        grid.add(newSlangField, 1, 1);
+        grid.add(new Label("New Definition:"), 0, 2);
+        grid.add(newDefField, 1, 2);
+        dialog.getDialogPane().setContent(grid);
 
-        if (newSlang == null || newSlang.isEmpty()) {
-            newSlang = oldSlang;
-        }
-
-        try {
-            boolean success = slangService.editSlang(oldSlang, newSlang, newDefinition);
-            clearResults();
-            if (success) {
-                addResult("Slang '" + oldSlang + "' edited successfully.");
-                editOldSlangField.clear();
-                editNewSlangField.clear();
-                editNewDefinitionField.clear();
-            } else {
-                addResult("Error: Slang '" + oldSlang + "' not found.");
+        // 3. Lấy kết quả
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == editButtonType) {
+                return new String[]{oldSlangField.getText(), newSlangField.getText(), newDefField.getText()};
             }
-        } catch (IOException e) {
-            showError("Error Editing Slang", "Could not save data: " + e.getMessage());
-        }
-    }
+            return null;
+        });
+        Optional<String[]> result = dialog.showAndWait();
 
-    /**
-     * Chức năng 6: Delete Slang
-     */
-    @FXML
-    private void handleDeleteSlang() {
-        showResultView();
-        String slang = deleteSlangField.getText();
-        if (isInvalid(slang, "Slang field cannot be empty.")) return;
+        // 4. Xử lý
+        if (result.isPresent()) {
+            String oldSlang = result.get()[0];
+            String newSlang = result.get()[1];
+            String newDefinition = result.get()[2];
 
-        Optional<ButtonType> result = showConfirmation("Confirm Delete",
-                "Are you sure you want to delete '" + slang + "'?",
-                "This action cannot be undone.",
-                ButtonType.OK, ButtonType.CANCEL
-        );
+            if (isInvalid(oldSlang, "Old Slang field cannot be empty.") || isInvalid(newDefinition, "New Definition field cannot be empty."))
+                return;
+            if (newSlang == null || newSlang.isEmpty()) newSlang = oldSlang;
 
-        if (result.isPresent() && result.get() == ButtonType.OK) {
             try {
-                boolean success = slangService.deleteSlang(slang);
-                clearResults();
-                if (success) {
-                    addResult("Slang '" + slang + "' deleted successfully.");
-                    deleteSlangField.clear();
+                if (!slangService.editSlang(oldSlang, newSlang, newDefinition)) {
+                    showError("Error", "Slang '" + oldSlang + "' not found.");
                 } else {
-                    addResult("Error: Slang '" + slang + "' not found.");
+                    showInfo("Success", "Slang edited successfully.", "");
                 }
             } catch (IOException e) {
-                showError("Error Deleting Slang", "Could not save data: " + e.getMessage());
+                showError("Error", "Could not save data: " + e.getMessage());
             }
-        } else {
-            clearResults();
-            addResult("Delete cancelled.");
         }
     }
 
-    /**
-     * Chức năng 7: Reset Dictionary
-     */
+    @FXML
+    private void handleDeleteSlang() {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Delete Slang");
+        dialog.setHeaderText("Enter the slang word you want to delete.");
+        dialog.setContentText("Slang:");
+        Optional<String> result = dialog.showAndWait();
+
+        if (result.isPresent() && !result.get().isEmpty()) {
+            String slang = result.get();
+            Optional<ButtonType> confirmResult = showConfirmation("Confirm Delete", "Are you sure you want to delete '" + slang + "'?", "This action cannot be undone.", ButtonType.OK, ButtonType.CANCEL);
+
+            if (confirmResult.isPresent() && confirmResult.get() == ButtonType.OK) {
+                try {
+                    if (!slangService.deleteSlang(slang)) {
+                        showError("Error", "Slang '" + slang + "' not found.");
+                    } else {
+                        showInfo("Success", "Slang deleted successfully.", "");
+                    }
+                } catch (IOException e) {
+                    showError("Error", "Could not save data: " + e.getMessage());
+                }
+            }
+        }
+    }
+
     @FXML
     private void handleResetDictionary() {
-        showResultView();
-        Optional<ButtonType> result = showConfirmation("Confirm Reset",
-                "Are you sure you want to reset the dictionary?",
-                "All your changes (add, edit, delete) will be lost!",
-                ButtonType.OK, ButtonType.CANCEL
-        );
-
+        Optional<ButtonType> result = showConfirmation("Confirm Reset", "Are you sure you want to reset the dictionary?", "All your changes and history will be lost!", ButtonType.OK, ButtonType.CANCEL);
         if (result.isPresent() && result.get() == ButtonType.OK) {
             try {
                 slangService.resetDictionary();
-                clearResults();
-                addResult("Dictionary has been reset to its original state.");
+                showInfo("Success", "Dictionary has been reset to original state.", "");
             } catch (IOException e) {
-                showError("Error Resetting", "Could not load/save original data: " + e.getMessage());
+                showError("Error", "Could not reset dictionary: " + e.getMessage());
             }
         }
     }
 
-    /**
-     * Chức năng 8: Random Slang
-     */
+    // --- Play Pane (Chức năng 8, 9, 10) ---
+
     @FXML
     private void handleRandomSlang() {
-        showResultView();
         SlangWord slang = slangService.getRandomSlang();
-        clearResults();
         if (slang != null) {
-            addResult("On this day Slang Word:");
-            addResult("Slang: " + slang.getSlang());
-            addResult("Definitions:");
-            resultListView.getItems().addAll(slang.getDefinitions());
+            showInfo("On This Day Slang Word",
+                    "Slang: " + slang.getSlang(),
+                    "Definitions: \n- " + String.join("\n- ", slang.getDefinitions()));
         } else {
-            addResult("No slang words available in the dictionary.");
+            showError("Error", "No slang words available in the dictionary.");
         }
     }
 
-
-    /**
-     * Chức năng 9: Quiz (Guess Definition)
-     */
     @FXML
     private void handleQuizGuessDefinition() {
         QuizQuestion quiz = slangService.generateQuiz(true);
@@ -320,12 +334,9 @@ public class MainViewController {
             showError("Quiz Error", "Not enough slangs to generate a quiz.");
             return;
         }
-        startQuiz(quiz, "What is the definition of: " + quiz.getQuestion());
+        showQuizDialog(quiz, "What is the definition of: " + quiz.getQuestion());
     }
 
-    /**
-     * Chức năng 10: Quiz (Guess Slang)
-     */
     @FXML
     private void handleQuizGuessSlang() {
         QuizQuestion quiz = slangService.generateQuiz(false);
@@ -333,153 +344,59 @@ public class MainViewController {
             showError("Quiz Error", "Not enough slangs to generate a quiz.");
             return;
         }
-        startQuiz(quiz, "Which slang has the definition: " + quiz.getQuestion());
+        showQuizDialog(quiz, "Which slang has the definition: " + quiz.getQuestion());
     }
 
-    /**
-     * HÀM MỚI: Xử lý khi nhấn nút "Submit Answer"
-     */
-    @FXML
-    private void handleQuizSubmit() {
-        if (currentQuiz == null) return;
+    private void showQuizDialog(QuizQuestion quiz, String headerText) {
+        Dialog<String> dialog = new Dialog<>();
+        dialog.setTitle("Quiz Time!");
+        dialog.setHeaderText(headerText);
 
-        Toggle selectedToggle = quizToggleGroup.getSelectedToggle();
-        if (selectedToggle == null) {
-            showError("No Selection", "Please select an answer.");
-            return;
-        }
-
-        String selectedAnswer = (String) selectedToggle.getUserData();
-        String correctAnswer = currentQuiz.getOptions().get(currentQuiz.getCorrectAnswerIndex());
-
-        // Vô hiệu hóa các lựa chọn
-        quizToggleGroup.getToggles().forEach(toggle -> ((RadioButton) toggle).setDisable(true));
-        quizSubmitButton.setDisable(true); // Vô hiệu hóa nút Submit
-
-        // Đổi nút "Cancel" thành "Close"
-        quizCancelButton.setText("Close");
-
-        // Hiển thị kết quả ngay bên dưới
-        Label resultLabel = new Label();
-        resultLabel.setFont(Font.font("System", FontWeight.BOLD, 14));
-        resultLabel.setWrapText(true);
-        resultLabel.setPadding(new Insets(10, 0, 0, 0));
-
-        if (selectedAnswer.equals(correctAnswer)) {
-            resultLabel.setTextFill(Color.GREEN);
-            resultLabel.setText("CORRECT! Good job!");
-        } else {
-            resultLabel.setTextFill(Color.RED);
-            resultLabel.setText("WRONG! \nThe correct answer was: " + correctAnswer);
-        }
-
-        // Thêm label kết quả vào VBox
-        quizPane.getChildren().add(resultLabel);
-    }
-
-    /**
-     * HÀM MỚI: Xử lý khi nhấn nút "Cancel" hoặc "Close" Quiz
-     */
-    @FXML
-    private void handleQuizCancel() {
-        // Chuyển về view results
-        showResultView();
-
-        // Dọn dẹp quiz hiện tại (nếu có)
-        if (currentQuiz != null) {
-            clearResults(); // Xóa ListView để hiển thị kết quả quiz
-
-            // Chỉ hiển thị kết quả trên ListView nếu người dùng đã nộp bài
-            if (quizSubmitButton.isDisabled()) {
-                Toggle selectedToggle = quizToggleGroup.getSelectedToggle();
-                String selectedAnswer = (String) selectedToggle.getUserData();
-                String correctAnswer = currentQuiz.getOptions().get(currentQuiz.getCorrectAnswerIndex());
-
-                addResult("--- QUIZ RESULT ---");
-                addResult("Question: " + quizQuestionLabel.getText());
-                addResult("Your answer: " + selectedAnswer);
-
-                if (selectedAnswer.equals(correctAnswer)) {
-                    addResult("===> CORRECT!");
-                } else {
-                    addResult("===> WRONG!");
-                    addResult("Correct answer was: " + correctAnswer);
-                }
-            } else {
-                // Người dùng nhấn "Cancel" trước khi nộp
-                addResult("Quiz cancelled.");
-            }
-        }
-
-        currentQuiz = null; // Reset
-    }
-
-    /**
-     * HÀM HELPER MỚI: Hiển thị View Quiz
-     */
-    private void startQuiz(QuizQuestion quiz, String headerText) {
-        this.currentQuiz = quiz; // Lưu quiz hiện tại
-
-        // Cập nhật tiêu đề và câu hỏi
-        quizTitleLabel.setText("QUIZ TIME!");
-        quizQuestionLabel.setText(headerText);
-
-        // Xóa các radio button cũ (chỉ xóa khỏi VBox chứa options)
-        quizOptionsBox.getChildren().clear();
-
-        // XÓA CÁC LABEL KẾT QUẢ CŨ (Sửa lỗi ClassCastException ở đây)
-        // Ta chỉ xóa các Label được thêm vào dynamic sau khi submit
-        quizPane.getChildren().removeIf(node ->
-                node instanceof Label && ((Label) node).getFont().getSize() == 14
-        );
-        // Lưu ý: Dùng Font.getSize() là cách để xác định Label được thêm vào dynamic
-        // vì Label cố định (quizTitleLabel) có Font size lớn hơn.
-
-        quizToggleGroup = new ToggleGroup();
-
+        VBox vbox = new VBox();
+        vbox.setSpacing(10);
+        vbox.setPadding(new Insets(20, 150, 10, 10));
+        ToggleGroup group = new ToggleGroup();
         List<String> options = quiz.getOptions();
 
-        // Tạo RadioButton mới cho mỗi lựa chọn
         for (String option : options) {
             RadioButton rb = new RadioButton(option);
-            rb.setToggleGroup(quizToggleGroup);
-            rb.setUserData(option); // Lưu trữ câu trả lời (String)
+            rb.setToggleGroup(group);
+            rb.setUserData(option);
             rb.setMaxWidth(Double.MAX_VALUE);
             rb.setWrapText(true);
-            rb.setDisable(false); // Đảm bảo nút được bật
-            quizOptionsBox.getChildren().add(rb);
+            rb.getStyleClass().add("quiz-radio-button");
+            vbox.getChildren().add(rb);
         }
+        if (!options.isEmpty()) {
+            group.selectToggle(group.getToggles().getFirst());
+        }
+        dialog.getDialogPane().setContent(vbox);
 
-        // Cài đặt lại các nút
-        quizSubmitButton.setDisable(false);
-        quizCancelButton.setText("Cancel");
+        ButtonType okButtonType = new ButtonType("Submit", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(okButtonType, ButtonType.CANCEL);
 
-        // Chuyển view
-        resultPane.setVisible(false);
-        quizPane.setVisible(true);
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == okButtonType) {
+                return (String) group.getSelectedToggle().getUserData();
+            }
+            return null;
+        });
+
+        Optional<String> result = dialog.showAndWait();
+
+        if (result.isPresent()) {
+            String selectedAnswer = result.get();
+            String correctAnswer = quiz.getOptions().get(quiz.getCorrectAnswerIndex());
+            if (selectedAnswer.equals(correctAnswer)) {
+                showInfo("Quiz Result", "CORRECT!", "Your answer was correct.");
+            } else {
+                showError("Quiz Result", "WRONG! The correct answer was: \n" + correctAnswer);
+            }
+        }
     }
 
-    /**
-     * HÀM HELPER MỚI: Hiển thị View Kết quả
-     */
-    private void showResultView() {
-        quizPane.setVisible(false);
-        resultPane.setVisible(true);
-    }
+    // ========== 3. HÀM HỖ TRỢ CHUNG ==========
 
-    // ========== CÁC HÀM HỖ TRỢ (Giữ nguyên) ==========
-
-    // Xóa sạch ListView kết quả
-    private void clearResults() {
-        resultListView.getItems().clear();
-    }
-
-    // Thêm 1 dòng vào ListView kết quả
-    private void addResult(String text) {
-        resultListView.getItems().add(text);
-    }
-
-    // Kiểm tra text field có rỗng không
     private boolean isInvalid(String text, String errorMessage) {
         if (text == null || text.trim().isEmpty()) {
             showError("Invalid Input", errorMessage);
@@ -488,7 +405,6 @@ public class MainViewController {
         return false;
     }
 
-    // Hiển thị hộp thoại thông báo
     private void showInfo(String title, String header, String content) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle(title);
@@ -497,7 +413,6 @@ public class MainViewController {
         alert.showAndWait();
     }
 
-    // Hiển thị hộp thoại lỗi
     private void showError(String title, String content) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle(title);
@@ -506,7 +421,6 @@ public class MainViewController {
         alert.showAndWait();
     }
 
-    // Hiển thị hộp thoại xác nhận (cho Delete, Reset, Add)
     private Optional<ButtonType> showConfirmation(String title, String header, String content, ButtonType... buttonTypes) {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle(title);
