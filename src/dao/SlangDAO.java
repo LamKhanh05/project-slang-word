@@ -17,13 +17,16 @@ public class SlangDAO implements Serializable {
     // Đảm bảo tương thích khi serialize
     private static final long serialVersionUID = 1L;
 
-    // Cấu trúc 1: Tối ưu Chức năng 1 (Tìm theo Slang)
+    // Chức năng 1 (Tìm theo Slang)
     private HashMap<String, List<String>> slangDictionary;
 
-    // Cấu trúc 2: Tối ưu Chức năng 2 (Tìm theo Definition) - "Inverted Index"
+    // Chức năng 2 (Tìm theo Definition) - "Inverted Index"
     private HashMap<String, List<String>> invertedIndex;
 
-    // Cấu trúc 3: Lịch sử tìm kiếm (Chức năng 3)
+//    def: Laughing Out Loud => laughing, out, loud => LOL, LOLL,..
+
+
+    // Lịch sử tìm kiếm (Chức năng 3)
     private List<String> searchHistory;
 
     public SlangDAO() {

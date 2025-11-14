@@ -232,9 +232,9 @@ public class MainViewController {
         TextField oldSlangField = new TextField();
         oldSlangField.setPromptText("Old Slang to Edit");
         TextField newSlangField = new TextField();
-        newSlangField.setPromptText("New Slang Name (blank to keep old)");
+        newSlangField.setPromptText("Name (blank to keep old)");
         TextField newDefField = new TextField();
-        newDefField.setPromptText("New Definition");
+        newDefField.setPromptText("Definition");
         grid.add(new Label("Old Slang:"), 0, 0);
         grid.add(oldSlangField, 1, 0);
         grid.add(new Label("New Slang:"), 0, 1);

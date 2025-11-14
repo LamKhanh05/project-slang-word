@@ -26,7 +26,6 @@ public class MainApp extends Application {
 
     @Override
     public void init() throws Exception {
-        // Phần init của bạn đã đúng, giữ nguyên
         File indexFile = new File(INDEX_FILE);
         try {
             if (indexFile.exists() && !indexFile.isDirectory()) {
@@ -80,7 +79,6 @@ public class MainApp extends Application {
 
     @Override
     public void stop() throws Exception {
-        // Phần stop của bạn đã đúng, giữ nguyên
         try {
             if (this.slangDAO != null) {
                 System.out.println("Saving indexed data to " + INDEX_FILE + "...");
