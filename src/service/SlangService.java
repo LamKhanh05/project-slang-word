@@ -24,11 +24,13 @@ public class SlangService {
     // Chức năng 1: Tìm theo slang word
     public List<String> findBySlang(String slang) {
         String upperSlang = slang.toUpperCase();
+        slangDAO.getSearchHistory().add(slang);
         return slangDAO.getSlangDictionary().get(upperSlang);
     }
 
     // Chức năng 2: Tìm theo definition
     public List<String> findByDefinition(String keyword) {
+        slangDAO.getSearchHistory().add(keyword);
 
         // 1. Tách chuỗi tìm kiếm thành các từ riêng lẻ
         String[] searchWords = keyword.toLowerCase().split("\\s+");
