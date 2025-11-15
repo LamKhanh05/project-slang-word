@@ -24,13 +24,11 @@ public class SlangService {
     // Chức năng 1: Tìm theo slang word
     public List<String> findBySlang(String slang) {
         String upperSlang = slang.toUpperCase();
-        slangDAO.getSearchHistory().add(slang);
         return slangDAO.getSlangDictionary().get(upperSlang);
     }
 
     // Chức năng 2: Tìm theo definition
     public List<String> findByDefinition(String keyword) {
-        slangDAO.getSearchHistory().add(keyword);
 
         // 1. Tách chuỗi tìm kiếm thành các từ riêng lẻ
         String[] searchWords = keyword.toLowerCase().split("\\s+");
@@ -46,7 +44,7 @@ public class SlangService {
             // 5. Lấy danh sách slang cho từ này
             List<String> slangsForWord = slangDAO.getInvertedIndex().get(cleanedWord);
 
-            // 6. Nếu tìm thấy, thêm tất cả vào Set kết quảs
+            // 6. Nếu tìm thấy, thêm tất cả vào Set kết quả
             if (slangsForWord != null) {
                 foundSlangs.addAll(slangsForWord);
             }
@@ -78,8 +76,8 @@ public class SlangService {
             definitions.add(definition);
             slangDAO.getSlangDictionary().put(upperSlang, definitions);
         }
-
         slangDAO.buildInvertedIndex();
+        slangDAO.saveIndexedData(INDEX_FILE);
         return true;
     }
 
@@ -89,7 +87,7 @@ public class SlangService {
         String upperNewSlang = newSlang.toUpperCase();
 
         if (!slangDAO.getSlangDictionary().containsKey(upperOldSlang)) {
-            return false; // Slang cũ không tồn tại
+            return false;
         }
 
         List<String> definitions = slangDAO.getSlangDictionary().remove(upperOldSlang);
@@ -105,6 +103,7 @@ public class SlangService {
         }
 
         slangDAO.buildInvertedIndex();
+        slangDAO.saveIndexedData(INDEX_FILE);
         return true;
     }
 
@@ -112,12 +111,13 @@ public class SlangService {
     public boolean deleteSlang(String slang) throws IOException {
         String upperSlang = slang.toUpperCase();
         if (!slangDAO.getSlangDictionary().containsKey(upperSlang)) {
-            return false; // Không tồn tại
+            return false; 
         }
 
         slangDAO.getSlangDictionary().remove(upperSlang);
 
         slangDAO.buildInvertedIndex();
+        slangDAO.saveIndexedData(INDEX_FILE);
         return true;
     }
 

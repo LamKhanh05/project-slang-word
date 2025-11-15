@@ -46,33 +46,24 @@ public class MainApp extends Application {
 
     /**
      * Hàm start() xây dựng giao diện.
-     * THAY THẾ TOÀN BỘ HÀM NÀY
      */
     @Override
     public void start(Stage primaryStage) throws Exception {
-        // 1. Tải FXML (Giống của bạn)
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/MainView.fxml"));
         Parent root = loader.load();
 
-        // 2. Lấy Controller (Giống của bạn)
         MainViewController controller = loader.getController();
         controller.setSlangService(slangService);
 
-        // 3. **THAY ĐỔI QUAN TRỌNG Ở ĐÂY**
-        // Tăng kích thước cửa sổ và tải file CSS
-        Scene scene = new Scene(root, 1000, 700); // Tăng kích thước
+        Scene scene = new Scene(root, 1000, 700); 
 
-        // 4. **THÊM DÒNG NÀY:** Lấy đường dẫn đến file CSS
-        // (Giả sử file style.css nằm trong /resources/view/ giống MainView.fxml)
         String cssPath = getClass().getResource("/view/style.css").toExternalForm();
 
-        // 5. **THÊM DÒNG NÀY:** Áp dụng CSS cho Scene
         scene.getStylesheets().add(cssPath);
 
-        // 6. Hiển thị cửa sổ
         primaryStage.setTitle("Slang Word Dictionary");
-        primaryStage.setScene(scene); // Dùng scene đã có CSS
-        primaryStage.setMinWidth(900); // Đặt kích thước tối thiểu
+        primaryStage.setScene(scene); 
+        primaryStage.setMinWidth(900); 
         primaryStage.setMinHeight(600);
         primaryStage.show();
     }

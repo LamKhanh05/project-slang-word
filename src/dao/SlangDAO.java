@@ -14,7 +14,6 @@ import java.util.Map;
  * Implement Serializable để lưu toàn bộ các cấu trúc index đã xây dựng.
  */
 public class SlangDAO implements Serializable {
-    // Đảm bảo tương thích khi serialize
     private static final long serialVersionUID = 1L;
 
     // Chức năng 1 (Tìm theo Slang)
@@ -22,9 +21,6 @@ public class SlangDAO implements Serializable {
 
     // Chức năng 2 (Tìm theo Definition) - "Inverted Index"
     private HashMap<String, List<String>> invertedIndex;
-
-//    def: Laughing Out Loud => laughing, out, loud => LOL, LOLL,..
-
 
     // Lịch sử tìm kiếm (Chức năng 3)
     private List<String> searchHistory;

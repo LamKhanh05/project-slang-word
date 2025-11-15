@@ -65,6 +65,7 @@ public class MainViewController {
         // Mặc định chọn màn hình Search
         selectNavButton(navSearchButton);
         showPane(searchPane);
+        
     }
 
     public void setSlangService(SlangService service) {
@@ -94,7 +95,7 @@ public class MainViewController {
     private void handleShowHistoryView() {
         showPane(historyPane);
         selectNavButton(navHistoryButton);
-        loadHistoryList(); // Tải lịch sử khi nhấn vào
+        loadHistoryList(); 
     }
 
     private void showPane(Node paneToShow) {
@@ -149,8 +150,8 @@ public class MainViewController {
     private void handleClearHistory() {
         Optional<ButtonType> result = showConfirmation("Confirm Clear", "Are you sure you want to clear all search history?", "", ButtonType.OK, ButtonType.CANCEL);
         if (result.isPresent() && result.get() == ButtonType.OK) {
-            slangService.getSearchHistory().clear(); // Xóa history
-            loadHistoryList(); // Tải lại danh sách (đã rỗng)
+            slangService.getSearchHistory().clear(); 
+            loadHistoryList();
         }
     }
 
@@ -158,7 +159,6 @@ public class MainViewController {
 
     @FXML
     private void handleAddSlang() {
-        // 1. Tạo Dialog
         Dialog<Pair<String, String>> dialog = new Dialog<>();
         dialog.setTitle("Add New Slang");
         dialog.setHeaderText("Enter the new slang word and its definition.");
@@ -166,7 +166,6 @@ public class MainViewController {
         ButtonType addButtonType = new ButtonType("Add", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(addButtonType, ButtonType.CANCEL);
 
-        // 2. Tạo layout
         GridPane grid = new GridPane();
         grid.setHgap(10);
         grid.setVgap(10);
@@ -181,7 +180,6 @@ public class MainViewController {
         grid.add(definitionField, 1, 1);
         dialog.getDialogPane().setContent(grid);
 
-        // 3. Lấy kết quả
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == addButtonType) {
                 return new Pair<>(slangField.getText(), definitionField.getText());
@@ -190,14 +188,12 @@ public class MainViewController {
         });
         Optional<Pair<String, String>> result = dialog.showAndWait();
 
-        // 4. Xử lý
         if (result.isPresent()) {
             String slang = result.get().getKey();
             String definition = result.get().getValue();
             if (isInvalid(slang, "Slang field cannot be empty.") || isInvalid(definition, "Definition field cannot be empty."))
                 return;
 
-            // Xử lý trùng lặp (như code cũ)
             boolean overwrite = false;
             if (slangService.findBySlang(slang) != null) {
                 Optional<ButtonType> confirmResult = showConfirmation("Slang Exists", "Slang '" + slang + "' already exists.", "Overwrite or Duplicate (add definition)?", new ButtonType("Overwrite"), new ButtonType("Duplicate"), ButtonType.CANCEL);
@@ -217,14 +213,12 @@ public class MainViewController {
 
     @FXML
     private void handleEditSlang() {
-        // 1. Tạo Dialog
         Dialog<String[]> dialog = new Dialog<>();
         dialog.setTitle("Edit Slang");
         dialog.setHeaderText("Enter the slang to edit and its new details.");
         ButtonType editButtonType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(editButtonType, ButtonType.CANCEL);
 
-        // 2. Tạo layout
         GridPane grid = new GridPane();
         grid.setHgap(10);
         grid.setVgap(10);
@@ -243,7 +237,6 @@ public class MainViewController {
         grid.add(newDefField, 1, 2);
         dialog.getDialogPane().setContent(grid);
 
-        // 3. Lấy kết quả
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == editButtonType) {
                 return new String[]{oldSlangField.getText(), newSlangField.getText(), newDefField.getText()};
@@ -252,7 +245,6 @@ public class MainViewController {
         });
         Optional<String[]> result = dialog.showAndWait();
 
-        // 4. Xử lý
         if (result.isPresent()) {
             String oldSlang = result.get()[0];
             String newSlang = result.get()[1];
@@ -395,7 +387,6 @@ public class MainViewController {
         }
     }
 
-    // ========== 3. HÀM HỖ TRỢ CHUNG ==========
 
     private boolean isInvalid(String text, String errorMessage) {
         if (text == null || text.trim().isEmpty()) {
